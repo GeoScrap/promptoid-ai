@@ -18,6 +18,9 @@ export const authOptions: NextAuthOptions = {
           response_type: "code"
         }
       },
+      // Allow both localhost and production URLs
+      // This is important for development and production to work with the same Google OAuth client
+      allowDangerousEmailAccountLinking: true,
     }),
     CredentialsProvider({
       name: "Credentials",
@@ -82,23 +85,40 @@ export const authOptions: NextAuthOptions = {
     async redirect({ url, baseUrl }) {
       console.log('NextAuth Redirect:', { url, baseUrl });
 
-      // Always redirect to dashboard after successful sign-in
-      if (url.includes('/api/auth/callback')) {
-        return `${baseUrl}/dashboard`;
-      }
+      try {
+        // Get the actual origin from the URL
+        const urlObj = new URL(url);
+        const actualOrigin = urlObj.origin;
 
-      // Allows relative callback URLs
-      if (url.startsWith("/")) {
-        return `${baseUrl}${url}`;
-      }
+        // Handle local development vs production
+        // In development, use the actual origin from the request
+        // In production, use the configured NEXTAUTH_URL
+        const effectiveBaseUrl = process.env.NODE_ENV === 'development' ? actualOrigin : baseUrl;
 
-      // Allows callback URLs on the same origin
-      if (new URL(url).origin === baseUrl) {
-        return url;
-      }
+        console.log('Effective base URL:', effectiveBaseUrl);
 
-      // Default fallback
-      return baseUrl;
+        // Always redirect to dashboard after successful sign-in
+        if (url.includes('/api/auth/callback')) {
+          return `${effectiveBaseUrl}/dashboard`;
+        }
+
+        // Allows relative callback URLs
+        if (url.startsWith("/")) {
+          return `${effectiveBaseUrl}${url}`;
+        }
+
+        // For absolute URLs, check if they're on the same origin
+        if (urlObj.origin === effectiveBaseUrl) {
+          return url;
+        }
+
+        // Default fallback - go to the dashboard
+        return `${effectiveBaseUrl}/dashboard`;
+      } catch (error) {
+        console.error('Error in redirect callback:', error);
+        // If anything goes wrong, redirect to the base URL
+        return baseUrl;
+      }
     },
   },
 };

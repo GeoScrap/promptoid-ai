@@ -6,6 +6,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import { SessionProvider } from '@/components/providers/session-provider';
+import { AuthDebugWrapper } from '@/components/providers/auth-debug-wrapper';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -31,8 +32,10 @@ export default async function RootLayout({
           disableTransitionOnChange
         >
           <SessionProvider session={session}>
-            {children}
-            <Toaster />
+            <AuthDebugWrapper>
+              {children}
+              <Toaster />
+            </AuthDebugWrapper>
           </SessionProvider>
         </ThemeProvider>
       </body>

@@ -183,12 +183,18 @@ export function AuthForm({ mode }: AuthFormProps) {
             className="w-full"
             onClick={() => {
               setIsLoading(true);
-              // Use the absolute URL for the callback to ensure it matches exactly
+              // Use the current origin for the callback URL
               const callbackUrl = `${window.location.origin}/dashboard`;
               console.log('Signing in with Google, callback:', callbackUrl);
+
+              // Sign in with Google
               signIn("google", {
                 callbackUrl,
                 redirect: true
+              }).catch(error => {
+                console.error('Sign in error:', error);
+                setIsLoading(false);
+                toast.error('Failed to sign in with Google');
               });
             }}
             disabled={isLoading}
