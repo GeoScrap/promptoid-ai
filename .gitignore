@@ -5,6 +5,10 @@
 /.pnp
 .pnp.js
 
+promptoid
+promptoid.pub
+
+
 # testing
 /coverage
 
