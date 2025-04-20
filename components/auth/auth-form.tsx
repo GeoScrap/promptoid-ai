@@ -183,8 +183,11 @@ export function AuthForm({ mode }: AuthFormProps) {
             className="w-full"
             onClick={() => {
               setIsLoading(true);
+              // Use the absolute URL for the callback to ensure it matches exactly
+              const callbackUrl = `${window.location.origin}/dashboard`;
+              console.log('Signing in with Google, callback:', callbackUrl);
               signIn("google", {
-                callbackUrl: "/dashboard",
+                callbackUrl,
                 redirect: true
               });
             }}

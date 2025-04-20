@@ -11,6 +11,13 @@ export const authOptions: NextAuthOptions = {
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID as string,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
+      authorization: {
+        params: {
+          prompt: "consent",
+          access_type: "offline",
+          response_type: "code"
+        }
+      },
     }),
     CredentialsProvider({
       name: "Credentials",
@@ -59,6 +66,7 @@ export const authOptions: NextAuthOptions = {
   ],
   pages: {
     signIn: "/login",
+    error: "/auth/error",
   },
   debug: process.env.NODE_ENV === "development",
   session: {
@@ -72,10 +80,24 @@ export const authOptions: NextAuthOptions = {
       return session;
     },
     async redirect({ url, baseUrl }) {
+      console.log('NextAuth Redirect:', { url, baseUrl });
+
+      // Always redirect to dashboard after successful sign-in
+      if (url.includes('/api/auth/callback')) {
+        return `${baseUrl}/dashboard`;
+      }
+
       // Allows relative callback URLs
-      if (url.startsWith("/")) return `${baseUrl}${url}`;
+      if (url.startsWith("/")) {
+        return `${baseUrl}${url}`;
+      }
+
       // Allows callback URLs on the same origin
-      else if (new URL(url).origin === baseUrl) return url;
+      if (new URL(url).origin === baseUrl) {
+        return url;
+      }
+
+      // Default fallback
       return baseUrl;
     },
   },
