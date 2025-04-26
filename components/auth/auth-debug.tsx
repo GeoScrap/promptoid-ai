@@ -1,10 +1,30 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
+// Safe stringify function to handle circular references
+function safeStringify(obj: any, indent = 2) {
+  const cache = new Set();
+  return JSON.stringify(
+    obj,
+    (key, value) => {
+      if (typeof value === 'object' && value !== null) {
+        if (cache.has(value)) {
+          return '[Circular Reference]';
+        }
+        cache.add(value);
+      }
+      return value;
+    },
+    indent
+  );
+}
+
 export function AuthDebug() {
+  const { data: session, status } = useSession();
   const [debugInfo, setDebugInfo] = useState<any>(null);
   const [isVisible, setIsVisible] = useState(false);
 
@@ -36,6 +56,8 @@ export function AuthDebug() {
             environment: envInfo,
             providers,
             googleTest,
+            session: session,
+            authStatus: status,
             timestamp: new Date().toISOString(),
           });
         } catch (error) {
@@ -51,9 +73,9 @@ export function AuthDebug() {
   if (!isVisible) {
     return (
       <div className="fixed bottom-4 right-4 z-50">
-        <Button 
-          variant="outline" 
-          size="sm" 
+        <Button
+          variant="outline"
+          size="sm"
           onClick={() => setIsVisible(true)}
           className="bg-background/80 backdrop-blur-sm"
         >
@@ -69,9 +91,9 @@ export function AuthDebug() {
         <CardHeader className="pb-2">
           <div className="flex justify-between items-center">
             <CardTitle className="text-sm">Auth Debug Info</CardTitle>
-            <Button 
-              variant="ghost" 
-              size="sm" 
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={() => setIsVisible(false)}
               className="h-6 w-6 p-0"
             >
@@ -85,15 +107,15 @@ export function AuthDebug() {
         <CardContent className="pt-0">
           {debugInfo ? (
             <pre className="text-xs overflow-auto max-h-[50vh] p-2 bg-muted/50 rounded">
-              {JSON.stringify(debugInfo, null, 2)}
+              {safeStringify(debugInfo)}
             </pre>
           ) : (
             <div className="text-xs text-muted-foreground">Loading debug info...</div>
           )}
           <div className="mt-2 flex justify-end">
-            <Button 
-              variant="outline" 
-              size="sm" 
+            <Button
+              variant="outline"
+              size="sm"
               onClick={() => {
                 setDebugInfo(null);
                 setTimeout(() => {
@@ -117,6 +139,8 @@ export function AuthDebug() {
                         environment: envInfo,
                         providers,
                         googleTest,
+                        session: session,
+                        authStatus: status,
                         timestamp: new Date().toISOString(),
                       });
                     } catch (error) {

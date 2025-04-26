@@ -80,8 +80,16 @@ export function AuthForm({ mode }: AuthFormProps) {
         });
 
         if (!response.ok) {
-          const error = await response.json();
-          throw new Error(error.message || "Failed to sign up");
+          const errorData = await response.json();
+
+          // Handle specific status codes
+          if (response.status === 409) {
+            toast.error(errorData.error || "User with this email already exists");
+            setIsLoading(false);
+            return;
+          }
+
+          throw new Error(errorData.error || "Failed to sign up");
         }
 
         await signIn("credentials", {
@@ -183,11 +191,17 @@ export function AuthForm({ mode }: AuthFormProps) {
             className="w-full"
             onClick={() => {
               setIsLoading(true);
-              // Use the current origin for the callback URL
-              const callbackUrl = `${window.location.origin}/dashboard`;
-              console.log('Signing in with Google, callback:', callbackUrl);
 
-              // Sign in with Google
+              // Explicitly set the callback URL to ensure proper redirection
+              console.log('Signing in with Google');
+
+              // Get the base URL for the callback
+              const baseUrl = window.location.origin;
+              const callbackUrl = `${baseUrl}/dashboard`;
+
+              console.log('Using callback URL:', callbackUrl);
+
+              // Sign in with Google with explicit callbackUrl
               signIn("google", {
                 callbackUrl,
                 redirect: true

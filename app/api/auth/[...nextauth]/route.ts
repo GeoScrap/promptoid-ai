@@ -33,8 +33,7 @@ export const authOptions: NextAuthOptions = {
           return null;
         }
 
-        // For now, we'll skip the password check since we don't have a password field
-        // This should be updated if you add password authentication
+        // Find the user by email
         const user = await prisma.user.findUnique({
           where: {
             email: credentials.email
@@ -45,18 +44,22 @@ export const authOptions: NextAuthOptions = {
           return null;
         }
 
-        // Since we don't have password in the User model, we'll skip this check
-        // Uncomment this if you add password to your User model
-        /*
+        // Check if the user has a password (might be a social login without password)
+        if (!user.password) {
+          console.log("User exists but has no password - might be a social login account");
+          return null;
+        }
+
+        // Verify the password
         const isPasswordValid = await compare(
           credentials.password,
           user.password
         );
 
         if (!isPasswordValid) {
+          console.log("Password validation failed");
           return null;
         }
-        */
 
         return {
           id: user.id,
@@ -86,38 +89,30 @@ export const authOptions: NextAuthOptions = {
       console.log('NextAuth Redirect:', { url, baseUrl });
 
       try {
-        // Get the actual origin from the URL
-        const urlObj = new URL(url);
-        const actualOrigin = urlObj.origin;
-
-        // Handle local development vs production
-        // In development, use the actual origin from the request
-        // In production, use the configured NEXTAUTH_URL
-        const effectiveBaseUrl = process.env.NODE_ENV === 'development' ? actualOrigin : baseUrl;
-
-        console.log('Effective base URL:', effectiveBaseUrl);
-
-        // Always redirect to dashboard after successful sign-in
-        if (url.includes('/api/auth/callback')) {
-          return `${effectiveBaseUrl}/dashboard`;
-        }
-
-        // Allows relative callback URLs
-        if (url.startsWith("/")) {
-          return `${effectiveBaseUrl}${url}`;
-        }
-
-        // For absolute URLs, check if they're on the same origin
-        if (urlObj.origin === effectiveBaseUrl) {
+        // Check if the URL starts with the base URL
+        if (url.startsWith(baseUrl)) {
           return url;
         }
 
-        // Default fallback - go to the dashboard
-        return `${effectiveBaseUrl}/dashboard`;
+        // Handle callback URLs with specific paths
+        if (url.startsWith('/dashboard') || url === '/dashboard') {
+          return `${baseUrl}/dashboard`;
+        }
+
+        // Default fallback based on environment
+        if (process.env.NODE_ENV === 'production') {
+          return 'https://promptoid-rkw1ka54a-avdhut-thorats-projects.vercel.app/dashboard';
+        } else {
+          return 'http://localhost:3000/dashboard';
+        }
       } catch (error) {
         console.error('Error in redirect callback:', error);
-        // If anything goes wrong, redirect to the base URL
-        return baseUrl;
+        // If anything goes wrong, use a safe fallback
+        if (process.env.NODE_ENV === 'production') {
+          return 'https://promptoid-rkw1ka54a-avdhut-thorats-projects.vercel.app';
+        } else {
+          return 'http://localhost:3000';
+        }
       }
     },
   },

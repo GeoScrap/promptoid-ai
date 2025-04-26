@@ -21,8 +21,6 @@ export default function AuthErrorPage() {
         return "Error creating a user account with your OAuth provider. Please try again.";
       case "EmailCreateAccount":
         return "Error creating a user account with your email. Please try again.";
-      case "Callback":
-        return "Error during the OAuth callback. Please try again.";
       case "OAuthAccountNotLinked":
         return "This email is already associated with another account. Please sign in using the original provider.";
       case "EmailSignin":
@@ -50,13 +48,15 @@ export default function AuthErrorPage() {
             <h3 className="font-medium mb-2">Error: {error}</h3>
             <p>{getErrorMessage(error)}</p>
           </div>
-          
+
           <div className="mt-6 space-y-4">
             <h3 className="font-medium">Troubleshooting Steps:</h3>
             <ul className="list-disc pl-5 space-y-2">
               <li>Make sure you're using the correct account</li>
               <li>Clear your browser cookies and cache</li>
               <li>Try using an incognito/private browser window</li>
+              <li>Check that your Google account has access to the application</li>
+              <li>Verify that you're allowing third-party cookies in your browser</li>
               <li>If the problem persists, please contact support</li>
             </ul>
           </div>

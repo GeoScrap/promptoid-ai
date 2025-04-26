@@ -6,6 +6,24 @@ import { Button } from "@/components/ui/button";
 import { signIn, signOut } from "next-auth/react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 
+// Safe stringify function to handle circular references
+function safeStringify(obj: any, indent = 2) {
+  const cache = new Set();
+  return JSON.stringify(
+    obj,
+    (key, value) => {
+      if (typeof value === 'object' && value !== null) {
+        if (cache.has(value)) {
+          return '[Circular Reference]';
+        }
+        cache.add(value);
+      }
+      return value;
+    },
+    indent
+  );
+}
+
 export default function AuthTestPage() {
   const { data: session, status } = useSession();
   const [envVars, setEnvVars] = useState<any>(null);
@@ -43,7 +61,7 @@ export default function AuthTestPage() {
               <div>
                 <p className="text-green-600">✓ Authenticated</p>
                 <pre className="mt-4 p-4 bg-gray-100 rounded overflow-auto text-xs">
-                  {JSON.stringify(session, null, 2)}
+                  {safeStringify(session)}
                 </pre>
               </div>
             )}
@@ -56,7 +74,7 @@ export default function AuthTestPage() {
             <div className="p-4 border rounded-md">
               <h3 className="font-medium mb-2">Environment Variables</h3>
               <pre className="p-4 bg-gray-100 rounded overflow-auto text-xs">
-                {JSON.stringify(envVars, null, 2)}
+                {safeStringify(envVars)}
               </pre>
             </div>
           )}
