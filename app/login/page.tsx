@@ -1,6 +1,7 @@
 import { AuthForm } from "@/components/auth/auth-form";
 import { SpaceBackground } from "@/components/space-background";
 import { MainNav } from "@/components/navigation/main-nav";
+import { AuthTroubleshoot } from "@/components/auth/auth-troubleshoot";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
@@ -29,6 +30,7 @@ export default function LoginPage() {
               </Link>
             </p>
           </div>
+          <AuthTroubleshoot />
         </div>
       </main>
     </div>

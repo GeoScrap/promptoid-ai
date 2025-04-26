@@ -8,6 +8,8 @@ import { compare } from "bcryptjs";
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
   secret: process.env.NEXTAUTH_SECRET,
+  // Set the correct URL for NextAuth
+  ...(process.env.NEXTAUTH_URL ? { url: process.env.NEXTAUTH_URL } : {}),
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID as string,
@@ -90,22 +92,38 @@ export const authOptions: NextAuthOptions = {
       console.log('NextAuth Redirect:', { url, baseUrl });
 
       try {
-        // If the URL is already absolute and starts with the base URL, use it
-        if (url.startsWith(baseUrl)) {
+        // Production URL
+        const productionUrl = 'https://promptoid-69fugreb9-avdhut-thorats-projects.vercel.app';
+
+        // Default dashboard URL
+        const dashboardUrl = process.env.NODE_ENV === 'production'
+          ? `${productionUrl}/dashboard`
+          : `${baseUrl}/dashboard`;
+
+        // If the URL is already absolute and starts with the base URL or production URL, use it
+        if (url.startsWith(baseUrl) ||
+            (process.env.NODE_ENV === 'production' && url.startsWith(productionUrl))) {
+          console.log('Using provided URL:', url);
           return url;
         }
 
         // If it's a relative URL, make it absolute
         if (url.startsWith('/')) {
-          return `${baseUrl}${url}`;
+          const absoluteUrl = process.env.NODE_ENV === 'production'
+            ? `${productionUrl}${url}`
+            : `${baseUrl}${url}`;
+          console.log('Converting relative URL to absolute:', absoluteUrl);
+          return absoluteUrl;
         }
 
-        // Default to dashboard after successful authentication
-        const productionUrl = 'https://promptoid-69fugreb9-avdhut-thorats-projects.vercel.app';
-        const dashboardUrl = process.env.NODE_ENV === 'production'
-          ? `${productionUrl}/dashboard`
-          : `${baseUrl}/dashboard`;
+        // For callback URLs, always redirect to dashboard
+        if (url.includes('/api/auth/callback')) {
+          console.log('Redirecting callback to dashboard:', dashboardUrl);
+          return dashboardUrl;
+        }
 
+        // Default to dashboard
+        console.log('Using default dashboard URL:', dashboardUrl);
         return dashboardUrl;
       } catch (error) {
         console.error('Error in redirect callback:', error);
@@ -114,6 +132,7 @@ export const authOptions: NextAuthOptions = {
           ? 'https://promptoid-69fugreb9-avdhut-thorats-projects.vercel.app/dashboard'
           : `${baseUrl}/dashboard`;
 
+        console.log('Using fallback URL due to error:', fallbackUrl);
         return fallbackUrl;
       }
     },
