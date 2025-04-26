@@ -20,6 +20,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { LucideLoader2 } from "lucide-react";
 import { motion } from "framer-motion";
+import { GoogleDirectButton } from "./google-direct-button";
 
 const authFormSchema = z.object({
   email: z.string().email({
@@ -192,24 +193,15 @@ export function AuthForm({ mode }: AuthFormProps) {
             onClick={() => {
               setIsLoading(true);
 
-              // Explicitly set the callback URL to ensure proper redirection
-              console.log('Signing in with Google');
-
-              // Get the base URL for the callback
-              const baseUrl = window.location.origin;
-              const callbackUrl = `${baseUrl}/dashboard`;
-
-              console.log('Using callback URL:', callbackUrl);
-
-              // Sign in with Google with explicit callbackUrl
-              signIn("google", {
-                callbackUrl,
-                redirect: true
-              }).catch(error => {
-                console.error('Sign in error:', error);
-                setIsLoading(false);
-                toast.error('Failed to sign in with Google');
-              });
+              // Simplify the Google sign-in process
+              signIn("google")
+                .catch(error => {
+                  console.error('Sign in error:', error);
+                  toast.error('Failed to sign in with Google');
+                })
+                .finally(() => {
+                  setIsLoading(false);
+                });
             }}
             disabled={isLoading}
           >
@@ -234,6 +226,8 @@ export function AuthForm({ mode }: AuthFormProps) {
             )}
             {isLoading ? "Connecting..." : "Google"}
           </Button>
+
+          <GoogleDirectButton />
         </CardFooter>
       </Card>
     </motion.div>

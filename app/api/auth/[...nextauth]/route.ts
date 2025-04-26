@@ -7,6 +7,7 @@ import { compare } from "bcryptjs";
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
+  secret: process.env.NEXTAUTH_SECRET,
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID as string,
@@ -74,7 +75,7 @@ export const authOptions: NextAuthOptions = {
     signIn: "/login",
     error: "/auth/error",
   },
-  debug: process.env.NODE_ENV === "development",
+  debug: true, // Enable debug mode to get more information
   session: {
     strategy: "jwt",
   },
@@ -89,30 +90,31 @@ export const authOptions: NextAuthOptions = {
       console.log('NextAuth Redirect:', { url, baseUrl });
 
       try {
-        // Check if the URL starts with the base URL
+        // If the URL is already absolute and starts with the base URL, use it
         if (url.startsWith(baseUrl)) {
           return url;
         }
 
-        // Handle callback URLs with specific paths
-        if (url.startsWith('/dashboard') || url === '/dashboard') {
-          return `${baseUrl}/dashboard`;
+        // If it's a relative URL, make it absolute
+        if (url.startsWith('/')) {
+          return `${baseUrl}${url}`;
         }
 
-        // Default fallback based on environment
-        if (process.env.NODE_ENV === 'production') {
-          return 'https://promptoid-rkw1ka54a-avdhut-thorats-projects.vercel.app/dashboard';
-        } else {
-          return 'http://localhost:3000/dashboard';
-        }
+        // Default to dashboard after successful authentication
+        const productionUrl = 'https://promptoid-69fugreb9-avdhut-thorats-projects.vercel.app';
+        const dashboardUrl = process.env.NODE_ENV === 'production'
+          ? `${productionUrl}/dashboard`
+          : `${baseUrl}/dashboard`;
+
+        return dashboardUrl;
       } catch (error) {
         console.error('Error in redirect callback:', error);
         // If anything goes wrong, use a safe fallback
-        if (process.env.NODE_ENV === 'production') {
-          return 'https://promptoid-rkw1ka54a-avdhut-thorats-projects.vercel.app';
-        } else {
-          return 'http://localhost:3000';
-        }
+        const fallbackUrl = process.env.NODE_ENV === 'production'
+          ? 'https://promptoid-69fugreb9-avdhut-thorats-projects.vercel.app/dashboard'
+          : `${baseUrl}/dashboard`;
+
+        return fallbackUrl;
       }
     },
   },

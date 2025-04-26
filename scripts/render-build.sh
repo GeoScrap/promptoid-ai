@@ -5,11 +5,10 @@ set -o errexit
 # Install dependencies
 npm install
 
-# Generate Prisma client
+# Generate Prisma client without accessing the database
 npx prisma generate
 
-# Apply database migrations
-npx prisma migrate deploy
+# Build Next.js app without database migrations
+NODE_OPTIONS="--max-old-space-size=4096" next build
 
-# Build Next.js app
-npm run build
+# Note: Database migrations will be handled separately after deployment
