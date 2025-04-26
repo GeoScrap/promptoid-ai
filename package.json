@@ -6,9 +6,11 @@
     "dev": "next dev",
     "dev:optimized": "NODE_OPTIONS='--max-old-space-size=4096' next dev",
     "build": "prisma migrate deploy && next build",
+    "vercel-build": "node scripts/vercel-build.js",
     "start": "next start",
     "lint": "next lint",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "migrate": "prisma migrate deploy"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.0",
