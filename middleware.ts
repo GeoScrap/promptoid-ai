@@ -1,37 +1,48 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs';
 
-export function middleware(request: NextRequest) {
-  // Log the request URL for debugging
-  console.log('Middleware - Request URL:', request.url);
+export async function middleware(request: NextRequest) {
+  // Create a Supabase client configured to use cookies
+  const res = NextResponse.next();
+  const supabase = createMiddlewareClient({ req: request, res });
 
-  // Get the pathname
+  // Refresh session if expired - required for Server Components
+  const { data } = await supabase.auth.getSession();
+
+  // Log session status for debugging
+  console.log("Middleware - Session exists:", !!data.session);
+  console.log("Middleware - Path:", request.nextUrl.pathname);
+
+  // Check auth status for protected routes
   const { pathname } = request.nextUrl;
 
-  // Log more details for auth-related requests
-  if (pathname.includes('/api/auth')) {
-    console.log('Auth Request Details:', {
-      pathname,
-      search: request.nextUrl.search,
-      host: request.headers.get('host'),
-      referer: request.headers.get('referer'),
-    });
+  // Protected routes that require authentication
+  if (pathname.startsWith('/dashboard')) {
+    // If no session, redirect to login
+    if (!data.session) {
+      console.log("Middleware - No session, redirecting to login");
+      const redirectUrl = new URL('/login', request.url);
+      redirectUrl.searchParams.set('redirectTo', pathname);
+      return NextResponse.redirect(redirectUrl);
+    }
+
+    console.log("Middleware - Session found, allowing access to dashboard");
   }
 
-  // Add headers for debugging
-  const response = NextResponse.next();
-  response.headers.set('x-middleware-cache', 'no-cache');
+  // Add cache control headers to prevent caching
+  res.headers.set('Cache-Control', 'no-store, max-age=0');
 
-  return response;
+  return res;
 }
 
-// See "Matching Paths" below to learn more
 export const config = {
   matcher: [
     '/api/auth/:path*',
     '/login',
+    '/signup',
     '/dashboard/:path*',
-    '/direct-signin',
-    '/auth-debug-test',
+    '/auth/callback',
+    '/auth-debug',
   ],
 };

@@ -3,10 +3,7 @@ import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import { ThemeProvider } from '@/components/providers/theme-provider';
 import { Toaster } from '@/components/ui/toaster';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
-import { SessionProvider } from '@/components/providers/session-provider';
-import { AuthDebugWrapper } from '@/components/providers/auth-debug-wrapper';
+import { SupabaseAuthProvider } from '@/components/providers/supabase-auth-provider';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -15,13 +12,11 @@ export const metadata: Metadata = {
   description: 'Promptoid AI helps you transform rough ideas into precise, detailed prompts that get better results from AI tools like ChatGPT.',
 };
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const session = await getServerSession(authOptions);
-
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
@@ -31,12 +26,10 @@ export default async function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <SessionProvider session={session}>
-            <AuthDebugWrapper>
-              {children}
-              <Toaster />
-            </AuthDebugWrapper>
-          </SessionProvider>
+          <SupabaseAuthProvider>
+            {children}
+            <Toaster />
+          </SupabaseAuthProvider>
         </ThemeProvider>
       </body>
     </html>

@@ -4,27 +4,30 @@ import { useEffect, useState } from "react";
 import { DashboardLayout } from "@/components/dashboard/dashboard-layout";
 import { PromptForm } from "@/components/prompt/prompt-form";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { useSession } from "next-auth/react";
+import { useSupabaseAuth } from "@/components/providers/supabase-auth-provider";
 import { redirect } from "next/navigation";
 import { toast } from "sonner";
 
 export default function DashboardPage() {
-  const { data: session, status } = useSession();
+  const { user, isLoading: authLoading } = useSupabaseAuth();
   const [promptCount, setPromptCount] = useState(0);
   const [favoriteCount, setFavoriteCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
 
   // Redirect if not authenticated
   useEffect(() => {
-    if (status === 'unauthenticated') {
-      redirect('/login');
+    if (!authLoading && !user) {
+      console.log("Dashboard - No user found, redirecting to login");
+      window.location.href = '/login?redirectTo=/dashboard';
+    } else if (user) {
+      console.log("Dashboard - User authenticated:", user.email);
     }
-  }, [status]);
+  }, [user, authLoading]);
 
   // Fetch prompt counts
   useEffect(() => {
     const fetchCounts = async () => {
-      if (status === 'authenticated') {
+      if (user) {
         try {
           setIsLoading(true);
           // Fetch total prompts count
@@ -49,7 +52,7 @@ export default function DashboardPage() {
     };
 
     fetchCounts();
-  }, [status]);
+  }, [user]);
 
   // Function to handle prompt refresh
   const handlePromptRefresh = () => {
@@ -90,8 +93,12 @@ export default function DashboardPage() {
     fetchCounts();
   };
 
-  // If still loading session, show a loading state
-  if (status === 'loading') {
+  // Log authentication state for debugging
+  console.log("Dashboard - Auth loading:", authLoading);
+  console.log("Dashboard - User:", user ? user.email : "No user");
+
+  // If still loading auth, show a loading state
+  if (authLoading) {
     return (
       <DashboardLayout>
         <div className="flex flex-col gap-8">

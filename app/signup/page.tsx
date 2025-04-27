@@ -1,12 +1,25 @@
+"use client";
+
 import { AuthForm } from "@/components/auth/auth-form";
 import { SpaceBackground } from "@/components/space-background";
 import { MainNav } from "@/components/navigation/main-nav";
-import { AuthTroubleshoot } from "@/components/auth/auth-troubleshoot";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
+import { useSearchParams } from "next/navigation";
+import { useEffect } from "react";
 
 export default function SignupPage() {
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    // Log the redirectTo parameter for debugging
+    const redirectTo = searchParams.get("redirectTo");
+    if (redirectTo) {
+      console.log("Signup page - redirectTo parameter:", redirectTo);
+    }
+  }, [searchParams]);
+
   return (
     <div className="min-h-screen flex flex-col">
       <SpaceBackground />
@@ -30,7 +43,11 @@ export default function SignupPage() {
               </Link>
             </p>
           </div>
-          <AuthTroubleshoot />
+          <div className="mt-4 text-center">
+            <Link href="/auth-debug" className="text-sm text-muted-foreground hover:underline">
+              Debug Authentication
+            </Link>
+          </div>
         </div>
       </main>
     </div>

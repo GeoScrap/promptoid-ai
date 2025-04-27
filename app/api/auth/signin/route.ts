@@ -13,46 +13,31 @@ export async function POST(request: Request) {
       );
     }
 
-    if (password.length < 8) {
-      return NextResponse.json(
-        { error: "Password must be at least 8 characters long" },
-        { status: 400 }
-      );
-    }
-
     // Create Supabase server client
     const supabase = createServerSupabaseClient();
 
-    // Sign up the user
-    const { data, error } = await supabase.auth.signUp({
+    // Sign in the user
+    const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
 
     if (error) {
-      // Check for specific errors
-      if (error.message.includes("already registered")) {
-        return NextResponse.json(
-          { error: "User with this email already exists" },
-          { status: 409 }
-        );
-      }
-
       return NextResponse.json(
-        { error: error.message },
-        { status: 500 }
+        { error: "Invalid email or password" },
+        { status: 401 }
       );
     }
 
     return NextResponse.json({
       user: data.user,
-      message: "User created successfully",
+      session: data.session,
     });
   } catch (error) {
-    console.error("Error creating user:", error);
-
+    console.error("Error signing in:", error);
+    
     return NextResponse.json(
-      { error: "Failed to create user" },
+      { error: "Failed to sign in" },
       { status: 500 }
     );
   }

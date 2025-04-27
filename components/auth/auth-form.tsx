@@ -1,11 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,7 +19,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { LucideLoader2 } from "lucide-react";
 import { motion } from "framer-motion";
-import { GoogleDirectButton } from "./google-direct-button";
+import { useSupabaseAuth } from "@/components/providers/supabase-auth-provider";
 
 const authFormSchema = z.object({
   email: z.string().email({
@@ -39,7 +38,19 @@ interface AuthFormProps {
 
 export function AuthForm({ mode }: AuthFormProps) {
   const [isLoading, setIsLoading] = useState(false);
-  const router = useRouter();
+  const [redirectPath, setRedirectPath] = useState("/dashboard");
+  const searchParams = useSearchParams();
+  const { signIn, signUp } = useSupabaseAuth();
+
+  // Get the redirectTo parameter from the URL
+  useEffect(() => {
+    const redirectTo = searchParams.get("redirectTo");
+    if (redirectTo) {
+      // Decode the URL parameter to handle encoded slashes
+      setRedirectPath(decodeURIComponent(redirectTo));
+      console.log("Auth form - decoded redirectTo parameter:", decodeURIComponent(redirectTo));
+    }
+  }, [searchParams]);
 
   const form = useForm<AuthFormValues>({
     resolver: zodResolver(authFormSchema),
@@ -51,66 +62,69 @@ export function AuthForm({ mode }: AuthFormProps) {
 
   async function onSubmit(data: AuthFormValues) {
     setIsLoading(true);
-
-    if (mode === "login") {
-      const result = await signIn("credentials", {
-        email: data.email,
-        password: data.password,
-        redirect: false,
-      });
-
-      if (result?.error) {
-        toast.error("Invalid email or password");
-        setIsLoading(false);
-        return;
-      }
-
-      router.push("/dashboard");
-      toast.success("Welcome back!");
-    } else {
-      try {
-        const response = await fetch("/api/auth/signup", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            email: data.email,
-            password: data.password,
-          }),
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json();
-
-          // Handle specific status codes
-          if (response.status === 409) {
-            toast.error(errorData.error || "User with this email already exists");
+  
+    try {
+      if (mode === "login") {
+        // Sign in with Supabase
+        console.log("Attempting to sign in with email:", data.email);
+        const { data: authData, error } = await signIn(data.email, data.password);
+  
+        if (error) {
+          console.error("Login error:", error);
+          toast.error("Invalid email or password");
+          setIsLoading(false);
+          return;
+        }
+  
+        console.log("Login successful, session:", !!authData?.session);
+        console.log("Login successful, user:", !!authData?.user);
+  
+        // Show success toast
+        toast.success("Welcome back!");
+        console.log("Redirecting to:", redirectPath);
+  
+        // Make sure the path starts with a slash
+        const normalizedPath = redirectPath.startsWith('/') ? redirectPath : `/${redirectPath}`;
+        
+        // Force a hard navigation to the dashboard
+        window.location.replace(normalizedPath);
+      } else {
+        // Sign up with Supabase
+        console.log("Attempting to sign up with email:", data.email);
+        const { data: authData, error } = await signUp(data.email, data.password);
+  
+        if (error) {
+          // Check for specific errors
+          if (error.message.includes("already registered")) {
+            toast.error("This email is already registered. Try signing in instead.");
             setIsLoading(false);
             return;
           }
-
-          throw new Error(errorData.error || "Failed to sign up");
+  
+          throw error;
         }
-
-        await signIn("credentials", {
-          email: data.email,
-          password: data.password,
-          redirect: false,
-        });
-
-        router.push("/dashboard");
-        toast.success("Account created successfully!");
-      } catch (error) {
-        if (error instanceof Error) {
-          toast.error(error.message);
-        } else {
-          toast.error("Failed to create account");
-        }
+  
+        console.log("Signup successful, user:", !!authData?.user);
+  
+        // Show success message
+        toast.success("Account created successfully! Please check your email to confirm your account.");
+        console.log("Redirecting to:", redirectPath);
+  
+        // Use a small delay to ensure the session is properly set
+        setTimeout(() => {
+          window.location.href = redirectPath;
+        }, 500);
       }
+    } catch (error) {
+      console.error(`${mode === "login" ? "Sign in" : "Sign up"} error:`, error);
+      if (error instanceof Error) {
+        toast.error(error.message);
+      } else {
+        toast.error(`Failed to ${mode === "login" ? "sign in" : "create account"}`);
+      }
+    } finally {
+      setIsLoading(false);
     }
-
-    setIsLoading(false);
   }
 
   return (
@@ -192,16 +206,8 @@ export function AuthForm({ mode }: AuthFormProps) {
             className="w-full"
             onClick={() => {
               setIsLoading(true);
-
-              // Simplify the Google sign-in process
-              signIn("google")
-                .catch(error => {
-                  console.error('Sign in error:', error);
-                  toast.error('Failed to sign in with Google');
-                })
-                .finally(() => {
-                  setIsLoading(false);
-                });
+              // Use direct API route for Google OAuth
+              window.location.href = `/api/auth/google?redirectTo=${encodeURIComponent(redirectPath)}`;
             }}
             disabled={isLoading}
           >
@@ -226,8 +232,6 @@ export function AuthForm({ mode }: AuthFormProps) {
             )}
             {isLoading ? "Connecting..." : "Google"}
           </Button>
-
-          <GoogleDirectButton />
         </CardFooter>
       </Card>
     </motion.div>

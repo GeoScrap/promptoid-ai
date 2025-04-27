@@ -29,6 +29,8 @@ export default function AuthErrorPage() {
         return "The sign in credentials were incorrect. Please try again.";
       case "SessionRequired":
         return "You must be signed in to access this page.";
+      case "google":
+        return "There was a problem with Google authentication. This could be due to a configuration issue with the Google OAuth credentials or the callback URL.";
       default:
         return "An unknown error occurred during authentication. Please try again.";
     }
