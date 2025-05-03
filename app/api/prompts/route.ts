@@ -1,24 +1,26 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "../auth/[...nextauth]/route";
-import prisma from "@/lib/prisma";
+import { getServerSession } from "@/app/api/auth/[...supabase]/route";
+import { createServerSupabaseClient } from "@/lib/supabase-server";
 
 export async function GET() {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getServerSession();
 
     if (!session || !session.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const prompts = await prisma.prompt.findMany({
-      where: {
-        userId: session.user.id,
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
+    const supabase = createServerSupabaseClient();
+
+    const { data: prompts, error } = await supabase
+      .from('prompts')
+      .select('*')
+      .eq('user_id', session.user.id)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      throw error;
+    }
 
     return NextResponse.json(prompts);
   } catch (error) {
@@ -29,7 +31,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getServerSession();
 
     if (!session || !session.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -44,15 +46,24 @@ export async function POST(request: Request) {
     // Generate a title from the original prompt
     const title = originalPrompt.split(' ').slice(0, 5).join(' ') + '...';
 
-    const prompt = await prisma.prompt.create({
-      data: {
+    const supabase = createServerSupabaseClient();
+
+    const { data: prompt, error } = await supabase
+      .from('prompts')
+      .insert({
         title,
         content: refinedPrompt, // For backward compatibility
-        originalPrompt,
-        refinedPrompt,
-        userId: session.user.id,
-      },
-    });
+        original_prompt: originalPrompt,
+        refined_prompt: refinedPrompt,
+        user_id: session.user.id,
+        is_favorite: false
+      })
+      .select()
+      .single();
+
+    if (error) {
+      throw error;
+    }
 
     return NextResponse.json(prompt);
   } catch (error) {

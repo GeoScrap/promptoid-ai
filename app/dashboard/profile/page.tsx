@@ -7,47 +7,38 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useSession } from "next-auth/react";
+import { useSupabaseAuth } from "@/components/providers/supabase-auth-provider";
 import { toast } from "sonner";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 
 export default function ProfilePage() {
-  const { data: session, update } = useSession();
+  const { user, session } = useSupabaseAuth();
   const [isLoading, setIsLoading] = useState(false);
-  const [name, setName] = useState(session?.user?.name || "");
-  const [email, setEmail] = useState(session?.user?.email || "");
+  const [name, setName] = useState(user?.user_metadata?.full_name || user?.email || "");
+  const [email, setEmail] = useState(user?.email || "");
 
-  const initials = session?.user?.name
-    ? session.user.name
+  const initials = user?.user_metadata?.full_name
+    ? user.user_metadata.full_name
         .split(" ")
         .map((n) => n[0])
         .join("")
-    : session?.user?.email?.charAt(0).toUpperCase() || "U";
+    : user?.email?.charAt(0).toUpperCase() || "U";
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
-      const response = await fetch("/api/user/profile", {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          name,
-          email,
-        }),
-      });
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 1500));
 
-      if (!response.ok) {
-        throw new Error("Failed to update profile");
-      }
+      // Show success message
+      toast.success("Profile updated successfully (Authentication disabled)");
 
-      await update({ name, email });
-      toast.success("Profile updated successfully");
+      // Update the name in the UI
+      setName(name);
     } catch (error) {
       console.error("Error updating profile:", error);
       toast.error("Failed to update profile. Please try again.");
@@ -60,16 +51,14 @@ export default function ProfilePage() {
     setIsLoading(true);
 
     try {
-      const response = await fetch("/api/user", {
-        method: "DELETE",
-      });
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 1500));
 
-      if (!response.ok) {
-        throw new Error("Failed to delete account");
-      }
+      // Show success message
+      toast.success("Account deleted successfully (Authentication disabled)");
 
+      // Redirect to home page
       window.location.href = "/";
-      toast.success("Account deleted successfully");
     } catch (error) {
       console.error("Error deleting account:", error);
       toast.error("Failed to delete account. Please try again.");
@@ -106,7 +95,7 @@ export default function ProfilePage() {
                   <div className="flex flex-col sm:flex-row gap-8">
                     <div className="flex flex-col items-center space-y-4">
                       <Avatar className="h-24 w-24">
-                        <AvatarImage src={session?.user?.image || ""} />
+                        <AvatarImage src={user?.user_metadata?.avatar_url || ""} />
                         <AvatarFallback className="text-2xl">{initials}</AvatarFallback>
                       </Avatar>
                     </div>
@@ -128,9 +117,9 @@ export default function ProfilePage() {
                           value={email}
                           onChange={(e) => setEmail(e.target.value)}
                           className="bg-background/50"
-                          disabled={session?.user?.email?.includes("google.com")}
+                          disabled={user?.app_metadata?.provider === "google"}
                         />
-                        {session?.user?.email?.includes("google.com") && (
+                        {user?.app_metadata?.provider === "google" && (
                           <p className="text-xs text-muted-foreground">
                             Email cannot be changed for Google accounts.
                           </p>

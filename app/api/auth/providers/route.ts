@@ -1,11 +1,17 @@
 import { NextResponse } from 'next/server';
-import { getProviders } from 'next-auth/react';
 
 export async function GET() {
   try {
-    // Get the available authentication providers
-    const providers = await getProviders();
-    
+    // Return Supabase providers
+    const providers = {
+      google: {
+        id: 'google',
+        name: 'Google',
+        type: 'oauth',
+        signinUrl: '/api/auth/google',
+      }
+    };
+
     return NextResponse.json({
       status: 'success',
       providers,

@@ -4,14 +4,14 @@ import { Button } from "@/components/ui/button";
 import { Menu } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { UserMenu } from "@/components/dashboard/user-menu";
-import { useSession } from "next-auth/react";
+import { useSupabaseAuth } from "@/components/providers/supabase-auth-provider";
 
 interface DashboardHeaderProps {
   setIsOpen: (open: boolean) => void;
 }
 
 export function DashboardHeader({ setIsOpen }: DashboardHeaderProps) {
-  const { data: session } = useSession();
+  const { user } = useSupabaseAuth();
 
   return (
     <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -30,9 +30,9 @@ export function DashboardHeader({ setIsOpen }: DashboardHeaderProps) {
           <ThemeToggle />
           <UserMenu
             user={{
-              name: session?.user?.name || "User",
-              email: session?.user?.email || "",
-              image: session?.user?.image,
+              name: user?.user_metadata?.full_name || user?.email || "User",
+              email: user?.email || "",
+              image: user?.user_metadata?.avatar_url,
             }}
           />
         </div>

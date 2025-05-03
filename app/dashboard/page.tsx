@@ -14,15 +14,10 @@ export default function DashboardPage() {
   const [favoriteCount, setFavoriteCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Redirect if not authenticated
+  // Authentication is disabled, no need to redirect
   useEffect(() => {
-    if (!authLoading && !user) {
-      console.log("Dashboard - No user found, redirecting to login");
-      window.location.href = '/login?redirectTo=/dashboard';
-    } else if (user) {
-      console.log("Dashboard - User authenticated:", user.email);
-    }
-  }, [user, authLoading]);
+    console.log("Dashboard - Authentication disabled, no redirect needed");
+  }, []);
 
   // Fetch prompt counts
   useEffect(() => {

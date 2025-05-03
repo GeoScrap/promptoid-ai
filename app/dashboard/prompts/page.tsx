@@ -17,20 +17,41 @@ interface Prompt {
 }
 
 export default function PromptsPage() {
-  const [prompts, setPrompts] = useState<Prompt[]>([]);
+  // Mock prompts data since authentication is disabled
+  const mockPrompts: Prompt[] = [
+    {
+      id: "1",
+      originalPrompt: "Write an email to my boss",
+      refinedPrompt: "Write a professional email to my boss requesting time off for a family event, emphasizing my commitment to complete all pending tasks before leaving and arranging for coverage during my absence.",
+      isFavorite: true
+    },
+    {
+      id: "2",
+      originalPrompt: "Create a product description",
+      refinedPrompt: "Create a compelling product description for a new eco-friendly water bottle that highlights its sustainable materials, temperature retention capabilities, and sleek design, targeting environmentally conscious consumers aged 25-40.",
+      isFavorite: false
+    },
+    {
+      id: "3",
+      originalPrompt: "Help me write a blog post",
+      refinedPrompt: "Write a comprehensive 1500-word blog post about the impact of artificial intelligence on content creation, including current applications, ethical considerations, and future trends, with a balanced perspective suitable for a tech-savvy audience.",
+      isFavorite: true
+    }
+  ];
+
+  const [prompts, setPrompts] = useState<Prompt[]>(mockPrompts);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [view, setView] = useState<"all" | "favorites">("all");
 
+  // Mock fetch function that simulates API call
   const fetchPrompts = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch("/api/prompts");
-      if (!response.ok) {
-        throw new Error("Failed to fetch prompts");
-      }
-      const data = await response.json();
-      setPrompts(data);
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Use mock data
+      setPrompts(mockPrompts);
     } catch (error) {
       console.error("Error fetching prompts:", error);
       toast.error("Failed to load prompts. Please try again.");
@@ -51,63 +72,39 @@ export default function PromptsPage() {
 
   const handleDelete = async (id: string): Promise<void> => {
     try {
-      // Optimistically update the UI first
+      // Update the UI by removing the prompt with the given id
       setPrompts((prevPrompts) => prevPrompts.filter((prompt) => prompt.id !== id));
 
-      // Then make the API call
-      const response = await fetch(`/api/prompts/${id}`, {
-        method: "DELETE",
-      });
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 500));
 
-      if (!response.ok) {
-        // If the API call fails, revert the UI change by re-fetching
-        fetchPrompts();
-        throw new Error("Failed to delete prompt");
-      }
-
-      // Refresh the counts
-      refreshPrompts();
+      // Show success message
+      toast.success("Prompt deleted successfully");
     } catch (error) {
       console.error("Error deleting prompt:", error);
       toast.error("Failed to delete prompt. Please try again.");
-      throw error; // Re-throw to be caught by the PromptCard component
+      throw error;
     }
   };
 
   const handleToggleFavorite = async (id: string, isFavorite: boolean) => {
     try {
-      // Optimistically update the UI first for a better user experience
+      // Update the UI by toggling the favorite status
       setPrompts((prevPrompts) =>
         prevPrompts.map((prompt) =>
           prompt.id === id ? { ...prompt, isFavorite } : prompt
         )
       );
 
-      // Then make the API call
-      const response = await fetch(`/api/prompts/${id}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ isFavorite }),
-      });
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 300));
 
-      if (!response.ok) {
-        // If the API call fails, revert the UI change
-        setPrompts((prevPrompts) =>
-          prevPrompts.map((prompt) =>
-            prompt.id === id ? { ...prompt, isFavorite: !isFavorite } : prompt
-          )
-        );
-        throw new Error("Failed to update prompt");
-      }
-
-      // Update the counts in the UI
-      // This is handled by the useEffect that fetches prompts
+      // Show success message
+      toast.success(`Prompt ${isFavorite ? 'added to' : 'removed from'} favorites`);
     } catch (error) {
       console.error("Error updating prompt:", error);
       toast.error("Failed to update favorite status. Please try again.");
-      throw error; // Re-throw to be caught by the PromptCard component
+      throw error;
     }
   };
 

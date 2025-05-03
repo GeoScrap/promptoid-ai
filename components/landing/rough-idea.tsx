@@ -4,7 +4,6 @@ import React from 'react';
 import { useTheme } from "next-themes";
 
 export function RoughIdea() {
-  console.log('RoughIdea component rendering');
   const { theme } = useTheme();
 
   return (

@@ -11,14 +11,12 @@ export async function refinePrompt(userPrompt: string, answers?: Record<number, 
   try {
     // Check if we have the API key configured
     if (!useGemini) {
-      console.log('No API key configured, using fallback');
       return `Improved version of: ${userPrompt}
 
 Please add your Gemini API key to enable AI-powered prompt refinement.`;
     }
 
     // Use Gemini API
-    console.log('Using Gemini API for prompt refinement');
     return await geminiService.generatePromptRefinement(userPrompt, answers);
   } catch (error) {
     console.error('Error in prompt refinement:', error);
@@ -35,7 +33,6 @@ Original prompt: ${userPrompt}`;
 export async function getQuestions(userPrompt: string): Promise<any> {
   try {
     if (useGemini) {
-      console.log('Using Gemini API for generating questions');
       return await geminiService.generateQuestions(userPrompt);
     } else {
       // Fallback questions if no API key is configured
@@ -84,7 +81,6 @@ export async function getQuestions(userPrompt: string): Promise<any> {
 export async function getSuggestions(userPrompt: string): Promise<string[]> {
   try {
     if (useGemini) {
-      console.log('Using Gemini API for prompt suggestions');
       return await geminiService.generatePromptSuggestions(userPrompt);
     } else {
       // Fallback suggestions if no API key is configured

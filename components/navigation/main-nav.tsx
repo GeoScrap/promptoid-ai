@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { LogOut, Rocket } from "lucide-react";
-import { signOut } from "next-auth/react";
+import { useSupabaseAuth } from "@/components/providers/supabase-auth-provider";
 import { motion } from "framer-motion";
 
 interface MainNavProps {
@@ -15,6 +15,7 @@ interface MainNavProps {
 
 export function MainNav({ isLoggedIn }: MainNavProps) {
   const pathname = usePathname();
+  const { signOut } = useSupabaseAuth();
 
   return (
     <header className="sticky top-0 z-50 w-full backdrop-blur-md bg-background/70 border-b">
@@ -84,7 +85,10 @@ export function MainNav({ isLoggedIn }: MainNavProps) {
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => signOut({ callbackUrl: "/" })}
+                onClick={async () => {
+                  await signOut();
+                  window.location.href = "/";
+                }}
                 aria-label="Sign out"
               >
                 <LogOut className="w-5 h-5" />

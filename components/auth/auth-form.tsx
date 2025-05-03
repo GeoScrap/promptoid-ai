@@ -40,7 +40,8 @@ export function AuthForm({ mode }: AuthFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [redirectPath, setRedirectPath] = useState("/dashboard");
   const searchParams = useSearchParams();
-  const { signIn, signUp } = useSupabaseAuth();
+  // We're not using the actual auth functions anymore
+  const { } = useSupabaseAuth();
 
   // Get the redirectTo parameter from the URL
   useEffect(() => {
@@ -60,68 +61,31 @@ export function AuthForm({ mode }: AuthFormProps) {
     },
   });
 
-  async function onSubmit(data: AuthFormValues) {
+  async function onSubmit(_data: AuthFormValues) {
     setIsLoading(true);
-  
+
     try {
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 1500));
+
       if (mode === "login") {
-        // Sign in with Supabase
-        console.log("Attempting to sign in with email:", data.email);
-        const { data: authData, error } = await signIn(data.email, data.password);
-  
-        if (error) {
-          console.error("Login error:", error);
-          toast.error("Invalid email or password");
-          setIsLoading(false);
-          return;
-        }
-  
-        console.log("Login successful, session:", !!authData?.session);
-        console.log("Login successful, user:", !!authData?.user);
-  
         // Show success toast
-        toast.success("Welcome back!");
-        console.log("Redirecting to:", redirectPath);
-  
+        toast.success("Welcome back! (Authentication disabled)");
+
         // Make sure the path starts with a slash
         const normalizedPath = redirectPath.startsWith('/') ? redirectPath : `/${redirectPath}`;
-        
-        // Force a hard navigation to the dashboard
-        window.location.replace(normalizedPath);
+
+        // Redirect to dashboard
+        window.location.href = normalizedPath;
       } else {
-        // Sign up with Supabase
-        console.log("Attempting to sign up with email:", data.email);
-        const { data: authData, error } = await signUp(data.email, data.password);
-  
-        if (error) {
-          // Check for specific errors
-          if (error.message.includes("already registered")) {
-            toast.error("This email is already registered. Try signing in instead.");
-            setIsLoading(false);
-            return;
-          }
-  
-          throw error;
-        }
-  
-        console.log("Signup successful, user:", !!authData?.user);
-  
         // Show success message
-        toast.success("Account created successfully! Please check your email to confirm your account.");
-        console.log("Redirecting to:", redirectPath);
-  
-        // Use a small delay to ensure the session is properly set
-        setTimeout(() => {
-          window.location.href = redirectPath;
-        }, 500);
+        toast.success("Account created successfully! (Authentication disabled)");
+
+        // Redirect to dashboard
+        window.location.href = redirectPath;
       }
     } catch (error) {
-      console.error(`${mode === "login" ? "Sign in" : "Sign up"} error:`, error);
-      if (error instanceof Error) {
-        toast.error(error.message);
-      } else {
-        toast.error(`Failed to ${mode === "login" ? "sign in" : "create account"}`);
-      }
+      toast.error(`This is a mock authentication system. Authentication is currently disabled.`);
     } finally {
       setIsLoading(false);
     }
@@ -206,8 +170,8 @@ export function AuthForm({ mode }: AuthFormProps) {
             className="w-full"
             onClick={() => {
               setIsLoading(true);
-              // Use direct API route for Google OAuth
-              window.location.href = `/api/auth/google?redirectTo=${encodeURIComponent(redirectPath)}`;
+              // Redirect directly to dashboard (auth disabled)
+              window.location.href = redirectPath;
             }}
             disabled={isLoading}
           >

@@ -2,8 +2,5 @@
   "buildCommand": "npm run vercel-build",
   "installCommand": "npm install",
   "framework": "nextjs",
-  "outputDirectory": ".next",
-  "env": {
-    "PRISMA_GENERATE_DATAPROXY": "true"
-  }
+  "outputDirectory": ".next"
 }

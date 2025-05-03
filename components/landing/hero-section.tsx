@@ -9,7 +9,6 @@ import { useTheme } from "next-themes";
 import { RoughIdea } from "./rough-idea";
 
 export function HeroSection() {
-  console.log('HeroSection rendering');
   const { theme } = useTheme();
   // State for animation control
   const [currentStep, setCurrentStep] = useState(0);
@@ -46,7 +45,6 @@ export function HeroSection() {
     for (let i = 0; i < text.length; i++) {
       currentText += text[i];
       setter(currentText);
-      console.log('Typing character:', text[i], 'Current text:', currentText);
       // Random delay to simulate realistic typing
       await new Promise(resolve => setTimeout(resolve,
         speed + (Math.random() * 30)
@@ -127,7 +125,6 @@ export function HeroSection() {
 
       // Set a static rough idea immediately
       setRoughIdea('Write an email to my boss');
-      console.log('Set initial rough idea');
 
       setCurrentStep(0);
       setGeneratedText('');
@@ -175,9 +172,7 @@ export function HeroSection() {
       setIsGenerating(true);
 
       // Generate the refined prompt in a ChatGPT-like fashion
-      console.log('Starting to generate text in ChatGPT style');
       await generateTextInChunks(fullRefinedPrompt, setGeneratedText);
-      console.log('Finished generating text');
       if (!isMounted) return;
 
       // Completion effect
@@ -209,14 +204,12 @@ export function HeroSection() {
   const playSubtleSound = () => {
     // In a real implementation, you would play a subtle UI sound here
     // For example: new Audio('/sounds/subtle-pop.mp3').play();
-    console.log('Playing subtle sound');
   };
 
   // Function to simulate selection sound
   const playSelectionSound = () => {
     // In a real implementation, you would play a selection sound here
     // For example: new Audio('/sounds/select.mp3').play();
-    console.log('Playing selection sound');
   };
 
   return (

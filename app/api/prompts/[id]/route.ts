@@ -1,25 +1,33 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "../../auth/[...nextauth]/route";
-import prisma from "@/lib/prisma";
+import { getServerSession } from "@/app/api/auth/[...supabase]/route";
+import { createServerSupabaseClient } from "@/lib/supabase-server";
 
 export async function GET(
   request: Request,
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getServerSession();
 
     if (!session || !session.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const prompt = await prisma.prompt.findUnique({
-      where: {
-        id: params.id,
-        userId: session.user.id,
-      },
-    });
+    const supabase = createServerSupabaseClient();
+
+    const { data: prompt, error } = await supabase
+      .from('prompts')
+      .select('*')
+      .eq('id', params.id)
+      .eq('user_id', session.user.id)
+      .single();
+
+    if (error) {
+      if (error.code === 'PGRST116') {
+        return NextResponse.json({ error: "Prompt not found" }, { status: 404 });
+      }
+      throw error;
+    }
 
     if (!prompt) {
       return NextResponse.json({ error: "Prompt not found" }, { status: 404 });
@@ -37,7 +45,7 @@ export async function PATCH(
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getServerSession();
 
     if (!session || !session.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -45,15 +53,19 @@ export async function PATCH(
 
     const { isFavorite } = await request.json();
 
-    const prompt = await prisma.prompt.update({
-      where: {
-        id: params.id,
-        userId: session.user.id,
-      },
-      data: {
-        isFavorite,
-      },
-    });
+    const supabase = createServerSupabaseClient();
+
+    const { data: prompt, error } = await supabase
+      .from('prompts')
+      .update({ is_favorite: isFavorite })
+      .eq('id', params.id)
+      .eq('user_id', session.user.id)
+      .select()
+      .single();
+
+    if (error) {
+      throw error;
+    }
 
     return NextResponse.json(prompt);
   } catch (error) {
@@ -67,18 +79,23 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getServerSession();
 
     if (!session || !session.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    await prisma.prompt.delete({
-      where: {
-        id: params.id,
-        userId: session.user.id,
-      },
-    });
+    const supabase = createServerSupabaseClient();
+
+    const { error } = await supabase
+      .from('prompts')
+      .delete()
+      .eq('id', params.id)
+      .eq('user_id', session.user.id);
+
+    if (error) {
+      throw error;
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {

@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import { signOut } from "next-auth/react";
+import { useSupabaseAuth } from "@/components/providers/supabase-auth-provider";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { motion } from "framer-motion";
 
@@ -23,6 +23,7 @@ interface DashboardNavProps {
 }
 
 export function DashboardNav({ isOpen, setIsOpen, pathname }: DashboardNavProps) {
+  const { signOut } = useSupabaseAuth();
   const navItems = [
     {
       title: "Dashboard",
@@ -88,7 +89,10 @@ export function DashboardNav({ isOpen, setIsOpen, pathname }: DashboardNavProps)
               <Button
                 variant="ghost"
                 className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all justify-start font-normal text-sm hover:text-primary"
-                onClick={() => signOut({ callbackUrl: "/" })}
+                onClick={async () => {
+                  await signOut();
+                  window.location.href = "/";
+                }}
               >
                 <LogOut className="h-4 w-4" />
                 Logout
@@ -108,6 +112,7 @@ function MobileNav({
   pathname: string;
   setIsOpen: (open: boolean) => void;
 }) {
+  const { signOut } = useSupabaseAuth();
   const navItems = [
     {
       title: "Dashboard",
@@ -164,9 +169,10 @@ function MobileNav({
           <Button
             variant="ghost"
             className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all justify-start font-normal text-sm hover:text-primary"
-            onClick={() => {
+            onClick={async () => {
               setIsOpen(false);
-              signOut({ callbackUrl: "/" });
+              await signOut();
+              window.location.href = "/";
             }}
           >
             <LogOut className="h-4 w-4" />

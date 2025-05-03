@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { LogOut, User } from "lucide-react";
-import { signOut } from "next-auth/react";
+import { useSupabaseAuth } from "@/components/providers/supabase-auth-provider";
 import Link from "next/link";
 
 interface UserMenuProps {
@@ -22,6 +22,7 @@ interface UserMenuProps {
 }
 
 export function UserMenu({ user }: UserMenuProps) {
+  const { signOut } = useSupabaseAuth();
   const initials = user.name
     ? user.name
         .split(" ")
@@ -51,7 +52,10 @@ export function UserMenu({ user }: UserMenuProps) {
             <span>Profile</span>
           </DropdownMenuItem>
         </Link>
-        <DropdownMenuItem onClick={() => signOut({ callbackUrl: "/" })}>
+        <DropdownMenuItem onClick={async () => {
+          await signOut();
+          window.location.href = "/";
+        }}>
           <LogOut className="mr-2 h-4 w-4" />
           <span>Logout</span>
         </DropdownMenuItem>

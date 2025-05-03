@@ -12,12 +12,9 @@ import { useEffect } from "react";
 export default function SignupPage() {
   const searchParams = useSearchParams();
 
+  // Get redirectTo parameter if it exists
   useEffect(() => {
-    // Log the redirectTo parameter for debugging
     const redirectTo = searchParams.get("redirectTo");
-    if (redirectTo) {
-      console.log("Signup page - redirectTo parameter:", redirectTo);
-    }
   }, [searchParams]);
 
   return (
@@ -42,11 +39,6 @@ export default function SignupPage() {
                 Sign in
               </Link>
             </p>
-          </div>
-          <div className="mt-4 text-center">
-            <Link href="/auth-debug" className="text-sm text-muted-foreground hover:underline">
-              Debug Authentication
-            </Link>
           </div>
         </div>
       </main>
